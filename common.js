@@ -3,7 +3,6 @@
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = n => (n < 0 ? '-$' : '$') + Math.abs(Math.round(n)).toLocaleString();
-const ICON = { wheat: '🌾', corn: '🌽', oats: '🌿', cattle: '🐄' };
 const headTitle = s => String(s || '').toLowerCase().replace(/(^|[\s"(])([a-z])/g, (m, a, b) => a + b.toUpperCase());
 const SEASON = { lobby: 'Getting Ready', setup: 'Setting Up', spring: 'Spring', summer: 'Summer', fall: 'Fall', winter: 'Winter', end: 'The End', running: 'In Progress' };
 
@@ -114,33 +113,82 @@ const local = {
   del(k) { try { localStorage.removeItem(k); } catch (e) {} },
 };
 
-// Draw a farm grid. tiles = server tile status list, plots = crops.
+// ------------------------------------------------------------ art
+const ART = 'assets/';
+const icon = (name, cls = '') => `<img class="ico ${cls}" src="${ART}console/icons/icon-${name}.webp" alt="">`;
+const CROP_ICON = { wheat: 'wheat', corn: 'corn', oats: 'oats', cattle: 'cattle' };
+// Which ruined-field tile each chance card leaves behind (crops only)
+const DAMAGE_TILE = { drought: 'drought', locusts: 'eaten', hail: 'hail', fire: 'burned' };
+const CARD_BG = { rain: 'rain', drought: 'drought', locusts: 'locusts', killingwinter: 'blizzard', childrensblizzard: 'blizzard',
+  fire: 'fire', hail: 'hail', wheatcrash: 'market', bank: 'market', railroad: 'summer', cornboom: 'summer', closedrange: 'summer', land: 'summer' };
+const FAMILY_ART = { freeman: 'freeman', larsen: 'larsen', obrien: 'obrien', moore: 'moore' };
+const portrait = (fam, mood) => `${ART}console/portraits/${FAMILY_ART[fam]}-${mood}.webp`;
+const cameo = fam => `${ART}board/families/cameo-${FAMILY_ART[fam]}.webp`;
+const cardArt = id => `${ART}board/cards/card-${id}.webp`;
+const sceneArt = id => `${ART}board/scenes/scene-${id}.webp`;
+
+function backdropFor(f) {
+  if (f.phase === 'end' && f.fate) return `${ART}console/endings/end-${f.fate}.webp`;
+  if (f.phase === 'summer' && f.card) return `${ART}console/bg/bg-${CARD_BG[f.card.id] || 'summer'}.webp`;
+  if (f.phase === 'fall') return `${ART}console/bg/bg-fall.webp`;
+  if (f.phase === 'winter') return `${ART}console/bg/bg-winter.webp`;
+  return `${ART}console/bg/bg-summer.webp`;
+}
+
+function moodOf(f) {
+  if (f.fate === 'foreclosed' || f.fate === 'east') return 'worried';
+  if (f.fate) return 'hopeful';
+  if ((f.phase === 'summer' || f.phase === 'fall') && f.notes) {
+    const bad = f.notes.filter(n => n[0] === 'bad').length, good = f.notes.filter(n => n[0] === 'good').length;
+    if (bad > good) return 'worried';
+  }
+  if (f.phase === 'fall' && f.harvest && f.harvest.profit < 0) return 'worried';
+  if (f.phase === 'winter' && !f.paid && f.bill && f.cash < f.bill.total) return 'worried';
+  if (f.sick) return 'worried';
+  return 'hopeful';
+}
+
+// Draw a farm grid. tiles = tile status list, plots = crops.
 function farmHTML(f, opts = {}) {
+  const ripe = ['summer', 'fall', 'winter', 'end'].includes(f.phase);
+  const cardId = f.card && f.card.id;
   return f.tiles.map((st, i) => {
     const crop = f.plots[i];
-    let cls = st, label = '', icon = '';
-    if (st === 'open' && crop) { cls = crop; icon = ICON[crop]; }
-    else if (st === 'open') { label = opts.mini ? '' : (opts.paint ? 'Click to plant' : 'Empty'); }
-    else if (st === 'sod') { icon = '🧱'; label = 'Cut sod for your house'; }
-    else if (st === 'sick') { label = 'No one well enough to work this'; }
-    else if (st === 'locked') { label = 'Not your land'; }
+    let cls = st, label = '';
+    if (st === 'open' && crop) cls = `crop ${crop} ${ripe ? 'ripe' : 'sprout'}`;
+    else if (st === 'open') label = opts.mini ? '' : (opts.paint ? 'Click to plant' : '');
+    else if (st === 'sod') label = 'Cut sod for your house';
+    else if (st === 'sick') label = 'No one well enough to work this';
+    else if (st === 'locked') label = 'Not your land';
     let extra = '';
     if (opts.mult && crop && st === 'open') {
       const m = opts.mult[crop];
-      if (m < 0.75) cls += ' damaged'; else if (m > 1.05) cls += ' boosted';
-      if (Math.abs(m - 1) > 0.04 && !opts.mini) extra = `<span class="loss">${m > 1 ? '+' : ''}${Math.round((m - 1) * 100)}%</span>`;
+      if (m < 0.75) {
+        if (crop !== 'cattle' && DAMAGE_TILE[cardId] && !(cardId === 'hail' && crop === 'corn')) cls = 'ruined ruin-' + DAMAGE_TILE[cardId];
+        else if (crop === 'cattle' && (cardId === 'killingwinter' || cardId === 'childrensblizzard')) cls += ' snowed';
+        else cls += ' damaged';
+      } else if (m > 1.05) cls += ' boosted';
+      if (Math.abs(m - 1) > 0.04 && !opts.mini) extra = `<span class="loss ${m > 1 ? 'up' : 'down'}">${m > 1 ? '+' : ''}${Math.round((m - 1) * 100)}%</span>`;
     }
+    if (opts.winter && st !== 'sick') cls += ' snowed';
     const paint = opts.paint && st === 'open' ? ' paintable' : '';
-    return `<div class="tile ${cls}${paint}" data-i="${i}">${icon}${label ? `<small>${label}</small>` : ''}${extra}</div>`;
+    return `<div class="tile ${cls}${paint}" data-i="${i}">${label ? `<small>${label}</small>` : ''}${extra}</div>`;
   }).join('');
 }
 
 function yardHTML(f, name) {
   const s = f.setup || {};
-  const house = f.setupLocked || f.phase !== 'setup' ? (s.house === 'lumber' ? 'lumber-house' : 'sod-house') : (s.house === 'lumber' ? 'lumber-house' : 'sod-house');
-  return `<div class="sprite ${house}" title="${s.house === 'lumber' ? 'Lumber house' : 'Sod house'}"></div>` +
-    (s.windmill ? '<div class="sprite windmill" title="Windmill"><i></i></div>' : '') +
-    `<div class="signpost">${esc(name)}<br>${s.location === 'east' ? 'Railroad land' : 'Free claim'}</div>`;
+  const burned = s.house === 'lumber' && f.card && f.card.id === 'fire' && (f.phase === 'summer' || f.phase === 'fall');
+  const house = burned ? 'house-burned' : s.house === 'lumber' ? 'house-lumber' : 'house-sod';
+  const sp = (n, cls) => `<img class="sprite ${cls || n}" src="${ART}console/sprites/${n}.webp" alt="">`;
+  return `<div class="yard-row">` +
+    sp('tree', 'tree') + sp(house, 'house') +
+    (s.windmill ? sp('windmill', 'mill') : '') +
+    (f.fam === 'moore' ? sp('chickens', 'small') : '') +
+    (f.phase === 'fall' && f.harvest && f.harvest.total > 0 ? sp('grain-wagon', 'small') : '') +
+    (f.bonesSold ? sp('bones-pile', 'small') : '') +
+    `<div class="signpost"><img src="${ART}console/sprites/sign-claim.webp" alt=""><span>${esc(name)}<br><small>${s.location === 'east' ? 'Railroad land' : 'Free claim'}</small></span></div>` +
+    `</div>`;
 }
 
 function fxHTML(kind) {

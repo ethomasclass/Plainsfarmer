@@ -88,45 +88,45 @@ function lead() {
       </div>`;
   }
   if (p === 'setup') return article('Spring 1884', 'Families Set Up Their Homesteads',
-    'Under the Homestead Act, any family can claim 160 acres of western land. Live on it for 5 years and it is yours. First, choose where to farm, what house to build, and which tools to buy. Every choice is a bet on what the Plains will throw at you.');
+    'Under the Homestead Act, any family can claim 160 acres of western land. Live on it for 5 years and it is yours. First, choose where to farm, what house to build, and which tools to buy. Every choice is a bet on what the Plains will throw at you.', sceneArt('setup'));
   if (p === 'spring') return article(`Year ${game.year} of 5`, `Spring ${game.calYear}: Time to Plant`,
-    'Plant your fields. Wheat, corn, oats, or cattle? Nobody knows what this year will bring. Spread your bets, or go all in?');
+    'Plant your fields. Wheat, corn, oats, or cattle? Nobody knows what this year will bring. Spread your bets, or go all in?', sceneArt('spring'));
   if (p === 'summer' && game.card) {
     const c = game.card;
-    return `<div class="kicker">${esc(c.era)}</div><h2>${esc(c.headline)}</h2><div class="body">${esc(c.text)}</div>
+    return `<div class="kicker">${esc(c.era)}</div><h2 class="card">${esc(c.headline)}</h2><img class="leadart card" src="${cardArt(c.id)}" alt=""><div class="body">${esc(c.text)}</div>
       ${c.why ? `<div class="why"><b>Think about it:</b> ${esc(c.why)}</div>` : ''}
-      <div class="body" style="font-size:2.3vh;font-style:italic">Check your farm to see how your choices held up.</div>`;
+      <div class="body" style="font-size:2.2vh;font-style:italic">Check your farm to see how your choices held up.</div>`;
   }
   if (p === 'fall') {
     const rows = fams.filter(f => f.harvest).sort((a, b) => b.harvest.profit - a.harvest.profit)
       .map(f => `<tr><td>${esc(f.group)}</td><td>${esc(famName(f.fam))}</td><td>${money(f.harvest.total)}</td><td>${money(f.harvest.profit)}</td></tr>`).join('');
     return `<div class="kicker">After ${esc(game.card ? headTitle(game.card.headline) : 'a long summer')}</div>
-      <h2 class="small">Harvest Report, Fall ${game.calYear}</h2>
+      <h2 class="small">Harvest Report, Fall ${game.calYear}</h2><img class="leadart short" src="${sceneArt('fall')}" alt="">
       <table class="harvest-table"><tr><th>Group</th><th>Family</th><th>Sold for</th><th>Profit</th></tr>${rows}</table>`;
   }
   if (p === 'winter') {
     const lines = fams.map(f => `<li>${esc(f.group)}: ${f.fate ? esc(DATA.FATES[f.fate].title) : f.paid ? 'paid the bank' : f.cash >= f.bill.total ? 'deciding...' : '<b>short of money!</b>'}</li>`).join('');
-    return `<div class="kicker">Year ${game.year} of 5</div><h2 class="small">Winter ${game.calYear}: The Bank Comes Calling</h2>
+    return `<div class="kicker">Year ${game.year} of 5</div><h2 class="small">Winter ${game.calYear}: The Bank Comes Calling</h2><img class="leadart short" src="${sceneArt('winter')}" alt="">
       <div class="body" style="font-size:2.6vh">Every family owes the bank for food, fuel, and interest on their loan. Families who come up short must make hard choices.</div>
       <ul style="font-size:2.4vh;margin:0">${lines}</ul>`;
   }
   if (p === 'running') {
     const lines = fams.map(f => `<li><b>${esc(f.group)}</b> (${f.phase === 'end' ? 'finished' : f.phase === 'setup' ? 'setting up' : `${SEASON[f.phase]} ${f.calYear}`}): ${f.card ? esc(headTitle(f.card.headline)) : '...'}</li>`).join('');
-    return `<div class="kicker">1884 to 1888</div><h2 class="small">The Homestead Years</h2>
+    return `<div class="kicker">1884 to 1888</div><h2 class="small">The Homestead Years</h2><img class="leadart short" src="${sceneArt('selfpaced')}" alt="">
       <div class="body" style="font-size:2.5vh">Families are playing at their own pace, and every family draws its own chance cards. Watch the county map to see how everyone is doing.</div>
       <ul style="font-size:2.2vh;margin:0;display:grid;gap:.6vh">${lines}</ul>`;
   }
   if (p === 'end') {
     const n = k => fams.filter(f => f.fate === k).length;
-    return `<div class="kicker">Final Edition</div><h2 class="small">Who Proved Up?</h2>
+    return `<div class="kicker">Final Edition</div><h2 class="small">Who Proved Up?</h2><img class="leadart short" src="${sceneArt('end')}" alt="">
       <div class="tallyboard">${['debtfree', 'proved', 'foreclosed', 'east'].map(k => `<div><b>${n(k)}</b><span>${esc(DATA.FATES[k].title)}</span></div>`).join('')}</div>
       <div class="why">In real life, fewer than half of all homestead claims were ever proved up.</div>
       <ol><li>What decision hurt your family the most?</li><li>Who made money even when farmers failed?</li><li>Who paid the cost of your family getting this land?</li></ol>`;
   }
   return '';
 }
-function article(kicker, head, body) {
-  return `<div class="kicker">${esc(kicker)}</div><h2>${esc(head)}</h2><div class="body">${esc(body)}</div>`;
+function article(kicker, head, body, art) {
+  return `<div class="kicker">${esc(kicker)}</div><h2 class="small">${esc(head)}</h2>${art ? `<img class="leadart" src="${art}" alt="">` : ''}<div class="body">${esc(body)}</div>`;
 }
 
 function renderFams() {
@@ -140,7 +140,7 @@ function renderFams() {
     else if (!teacher()) flag = `<span class="flag wait">${f.phase === 'setup' ? 'Setting up' : `${SEASON[f.phase]} ${f.calYear}`}</span>`;
     else flag = `<span class="flag ${f.ready ? 'ready' : 'wait'}">${f.ready ? 'Ready' : 'Working'}</span>`;
     return `<div class="fbox ${f.fate === 'foreclosed' || f.fate === 'east' ? 'out' : ''}">
-      <div class="mini">${farmHTML(f, { mini: true, mult: f.phase === 'summer' ? f.mult : null })}</div>
+      ${game.phase === 'lobby' || f.phase === 'setup' ? `<img class="cameo" src="${cameo(f.fam)}" alt="">` : `<div class="mini">${farmHTML(f, { mini: true, mult: f.phase === 'summer' ? f.mult : null, winter: f.phase === 'winter' })}</div>`}
       <div><div class="nm">${esc(f.group)}</div><div class="sub">${esc(famName(f.fam))}</div>
       <div class="cash">Cash ${money(f.cash)} · Owes ${money(f.loan)}</div>${flag}</div>
       ${game.phase === 'lobby' ? `<button class="x" data-remove="${f.id}">remove</button>` : ''}</div>`;
@@ -226,17 +226,17 @@ function renderOffline() {
         <div class="roomcode">${esc(o.code)}</div>
         <div style="font-size:2vh">Then pick your family and a group name.</div>
         <button class="linkbtn" data-live="1">Back to Live Mode</button></div></div>`;
-  } else if (p === 'setup') lead = article('Spring 1884', 'Families Set Up Their Homesteads', 'Under the Homestead Act, any family can claim 160 acres of western land. Live on it for 5 years and it is yours. Choose where to farm, what house to build, and which tools to buy. Then lock in.');
-  else if (p === 'spring') lead = article(`Year ${o.year} of 5`, `Spring ${cal}: Time to Plant`, 'Plant your fields and lock in. Then wait for the news from the Prairie Herald. Nobody knows what this year will bring.');
+  } else if (p === 'setup') lead = article('Spring 1884', 'Families Set Up Their Homesteads', 'Under the Homestead Act, any family can claim 160 acres of western land. Live on it for 5 years and it is yours. Choose where to farm, what house to build, and which tools to buy. Then lock in.', sceneArt('setup'));
+  else if (p === 'spring') lead = article(`Year ${o.year} of 5`, `Spring ${cal}: Time to Plant`, 'Plant your fields and lock in. Then wait for the news from the Prairie Herald. Nobody knows what this year will bring.', sceneArt('spring'));
   else if (p === 'summer') {
     const c = Engine.CARD_BY_ID[o.card];
-    lead = `<div class="kicker">${esc(c.era)}</div><h2>${esc(c.headline)}</h2><div class="body">${esc(c.text)}</div>
+    lead = `<div class="kicker">${esc(c.era)}</div><h2 class="card">${esc(c.headline)}</h2><img class="leadart card" src="${cardArt(c.id)}" alt=""><div class="body">${esc(c.text)}</div>
       ${c.why ? `<div class="why"><b>Think about it:</b> ${esc(c.why)}</div>` : ''}
       <div class="unlockbox">Unlock word: <b>${esc(Engine.unlockWord(o.code, o.year))}</b></div>`;
   }
-  else if (p === 'fall') lead = article(`Year ${o.year} of 5`, `Fall ${cal}: Harvest Time`, 'Haul your crops to the railroad and see what they sold for. Did your choices protect you this year?');
-  else if (p === 'winter') lead = article(`Year ${o.year} of 5`, `Winter ${cal}: The Bank Comes Calling`, 'Every family owes the bank for food, fuel, and interest on their loan. Families who come up short must make hard choices. Pay up, then get ready for spring.');
-  else if (p === 'end') lead = `<div class="kicker">Final Edition</div><h2 class="small">Who Proved Up?</h2>
+  else if (p === 'fall') lead = article(`Year ${o.year} of 5`, `Fall ${cal}: Harvest Time`, 'Haul your crops to the railroad and see what they sold for. Did your choices protect you this year?', sceneArt('fall'));
+  else if (p === 'winter') lead = article(`Year ${o.year} of 5`, `Winter ${cal}: The Bank Comes Calling`, 'Every family owes the bank for food, fuel, and interest on their loan. Families who come up short must make hard choices. Pay up, then get ready for spring.', sceneArt('winter'));
+  else if (p === 'end') lead = `<div class="kicker">Final Edition</div><h2 class="small">Who Proved Up?</h2><img class="leadart short" src="${sceneArt('end')}" alt="">
       <div class="body" style="font-size:2.6vh">Hold up your screen. Which stamp did your family get?</div>
       <div class="tallyboard">${['debtfree', 'proved', 'foreclosed', 'east'].map(k => `<div><span>${esc(DATA.FATES[k].title)}</span></div>`).join('')}</div>
       <div class="why">In real life, fewer than half of all homestead claims were ever proved up.</div>
@@ -266,6 +266,8 @@ function drawQR(el, url) {
 }
 
 // ---------------------------------------------------------------- boot
+Engine.DATA.CARDS.forEach(c => { const i = new Image(); i.src = cardArt(c.id); });
+['setup', 'spring', 'fall', 'winter', 'end', 'selfpaced'].forEach(k => { const i = new Image(); i.src = sceneArt(k); });
 const saved = local.get(BOARD_KEY);
 if (saved && saved.offline) { offline = saved.offline; renderOffline(); }
 else startLive(saved && saved.game && saved.game.phase !== 'end' ? saved : null);

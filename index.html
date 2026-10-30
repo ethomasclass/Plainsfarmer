@@ -6,23 +6,25 @@
 <title>Prove Up! Farming the Great Plains</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Old+Standard+TT:wght@400;700&family=Press+Start+2P&family=Rye&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/brand/favicon.webp">
 <link rel="stylesheet" href="style.css">
 <style>
-  .home{display:grid;grid-template-columns:1fr 1fr;gap:3vw;padding-top:3vh;min-height:0}
-  .home a.door{display:flex;flex-direction:column;gap:1.4vh;text-decoration:none;color:var(--ink);border:3px solid var(--rule);background:#fbf4e3;padding:3vh 2.4vw;box-shadow:6px 6px 0 rgba(0,0,0,.18);transition:transform .1s}
+  .home{display:grid;grid-template-columns:1fr 1fr;gap:3vw;padding-top:2vh;min-height:0;align-content:start}
+  .home a.door{display:flex;flex-direction:column;gap:1vh;text-decoration:none;color:var(--ink);border:3px solid var(--rule);background:#fbf4e3;padding:2vh 2vw;box-shadow:6px 6px 0 rgba(0,0,0,.18);transition:transform .1s}
   .home a.door:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 rgba(0,0,0,.22)}
   .door .k{font-size:2vh;text-transform:uppercase;letter-spacing:.12em;color:#6b5a3e}
-  .door h2{margin:0;font-family:var(--head);font-weight:400;font-size:6vh;line-height:1}
-  .door p{margin:0;font-size:2.6vh;line-height:1.4}
+  .door h2{margin:0;font-family:var(--head);font-weight:400;font-size:5vh;line-height:1}
+  .door p{margin:0;font-size:2.3vh;line-height:1.35}
   .door .go{margin-top:auto;font-family:var(--head);font-size:3vh;background:#2b2118;color:var(--paper);padding:1.2vh 1.4vw;align-self:start}
-  .about{grid-column:1/-1;font-size:2.3vh;line-height:1.45;border-top:1px solid var(--rule);padding-top:2vh;columns:2;column-gap:3vw}
+  .about{grid-column:1/-1;font-size:1.95vh;line-height:1.4;border-top:1px solid var(--rule);padding-top:1.4vh;columns:2;column-gap:3vw}
   .about p{margin:0 0 1.2vh}
 </style>
 </head>
 <body class="board">
-<div id="paper" style="grid-template-rows:auto auto 1fr">
-  <div class="masthead"><h1>The Prairie Herald</h1></div>
+<div id="paper" style="grid-template-rows:auto auto auto 1fr">
+  <div class="masthead"><img class="orn" src="assets/board/ornaments/masthead-left.webp" alt=""><h1>The Prairie Herald</h1><img class="orn" src="assets/board/ornaments/masthead-right.webp" alt=""></div>
   <div class="dateline"><span>Prove Up! Farming the Great Plains</span><span>1884 to 1888</span><span>A US History Game</span></div>
+  <img class="herostrip" src="assets/board/scenes/hero.webp" alt="">
   <div class="home">
     <a class="door" href="board.html">
       <span class="k">For teachers</span><h2>Run a Class Game</h2>

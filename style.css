@@ -218,3 +218,102 @@ button{font-family:inherit;cursor:pointer}
 .howto ol{margin:0 0 1.5vh;padding-left:1.3em;display:grid;gap:1vh}
 .tallyboard span{font-size:2.2vh}
 .board #net{top:8px;bottom:auto}
+
+/* =================================================================
+   ART PASS (Google Flow assets)
+   ================================================================= */
+.ico{height:1.3em;width:auto;vertical-align:-.3em;margin-right:.3em;filter:drop-shadow(1px 1px 0 rgba(0,0,0,.25))}
+/* console chrome */
+.console #app{background:#1b120b url(assets/console/ui/wood-bar.webp) center/600px}
+#topbar{background:url(assets/console/ui/wood-bar.webp) center/420px;border-bottom:4px solid #120c07;box-shadow:inset 0 -8px 14px rgba(0,0,0,.45),0 3px 0 rgba(0,0,0,.3)}
+#topbar .brand{background:url(assets/brand/emblem.webp) left center/contain no-repeat;padding-left:6.6vh;min-height:6vh;display:flex;align-items:center}
+#topbar .who{display:flex;align-items:center;gap:.8vw;text-shadow:1px 1px 0 #000}
+.avatar{width:6.4vh;height:6.4vh;border-radius:6px;border:3px solid #120c07;object-fit:cover;box-shadow:0 2px 0 rgba(0,0,0,.4)}
+#topbar .season,.coin{display:flex;align-items:center;gap:.3em;background:rgba(18,12,7,.82);border:2px solid #120c07}
+#topbar .season .ico,.coin .ico{height:1.6em;margin-right:.1em}
+
+/* farm scene */
+#farmWrap{background:#4f8a3a center 32%/cover no-repeat;grid-template-rows:34% 1fr;border:0;border-radius:4px;box-shadow:0 0 0 4px #120c07,0 0 0 9px #6b4a2a,0 0 0 12px #120c07;margin:10px}
+#yard{padding:0 2.5%;display:flex;align-items:flex-end}
+.yard-row{display:flex;align-items:flex-end;gap:.4vw;width:100%;height:100%;padding-bottom:.4vh}
+.sprite{display:block;height:auto;filter:drop-shadow(2px 3px 0 rgba(0,0,0,.25))}
+.sprite.tree{height:78%;margin-right:-2.2vw;position:relative;z-index:0}
+.sprite.house{height:56%;position:relative;z-index:1}
+.sprite.mill{height:86%;width:auto;position:relative;z-index:1}
+.sprite.small{height:30%}
+.signpost{margin-left:auto;position:relative;height:62%;aspect-ratio:222/256;background:none;border:0;padding:0;max-width:none}
+.signpost img{position:absolute;inset:0;width:100%;height:100%}
+.signpost span{position:absolute;left:6%;right:6%;top:9%;height:44%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-family:var(--pixel);font-size:clamp(6px,.95vh,11px);line-height:1.35;color:#2b1a0b}
+.signpost small{font-size:.85em;opacity:.8}
+#farm{gap:5px;padding:1.5% 3% 5%}
+.tile{border:2px solid rgba(30,18,8,.6);border-radius:3px;background-size:cover!important;background-position:center!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 2px 0 rgba(0,0,0,.25)}
+.tile.open{background:url(assets/console/tiles/tile-soil.webp)}
+.tile.crop.wheat.sprout,.tile.crop.oats.sprout{background:url(assets/console/tiles/tile-sprout.webp)}
+.tile.crop.corn.sprout{background:url(assets/console/tiles/tile-corn-sprout.webp)}
+.tile.crop.wheat.ripe{background:url(assets/console/tiles/tile-wheat-ripe.webp)}
+.tile.crop.corn.ripe{background:url(assets/console/tiles/tile-corn-ripe.webp)}
+.tile.crop.oats.ripe{background:url(assets/console/tiles/tile-oats-ripe.webp)}
+.tile.crop.cattle{background:url(assets/console/tiles/tile-cattle.webp)}
+.tile.sod{background:url(assets/console/tiles/tile-sod.webp)}
+.tile.sick{background:url(assets/console/tiles/tile-fallow.webp);filter:none}
+.tile.locked{background:url(assets/console/tiles/tile-wild.webp);border-style:dashed;opacity:.9}
+.tile.ruin-drought{background:url(assets/console/tiles/tile-drought.webp)}
+.tile.ruin-eaten{background:url(assets/console/tiles/tile-eaten.webp)}
+.tile.ruin-hail{background:url(assets/console/tiles/tile-hail.webp)}
+.tile.ruin-burned{background:url(assets/console/tiles/tile-burned.webp)}
+.tile.damaged{filter:sepia(.75) saturate(.55) brightness(.72)}
+.tile.snowed::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.95),rgba(232,240,248,.85) 60%,rgba(210,222,236,.8));pointer-events:none}
+.tile.boosted{box-shadow:inset 0 0 0 3px #ffe27a,0 0 14px rgba(255,220,100,.65)}
+.tile small{background:rgba(20,12,6,.55);border-radius:3px;padding:2px 4px}
+.tile.locked small{background:rgba(255,250,235,.8);color:#203018}
+.tile .loss{font-size:clamp(8px,1.15vh,13px);padding:2px 4px;border-radius:3px;background:rgba(20,12,6,.75);right:3px;top:3px}
+.tile .loss.down{color:#ff9b8a}.tile .loss.up{color:#ffe27a}
+.fence{left:0;right:0;bottom:0;height:7%;border:0;background:url(assets/console/sprites/fence-wire.webp) repeat-x left bottom/auto 100%}
+.fence:before{display:none}
+#farmWrap.ending{background-position:center}
+#farmWrap.ending #yard,#farmWrap.ending #farm,#farmWrap.ending .fence{visibility:hidden}
+
+/* panel + controls */
+#panel{border:0;border-radius:4px;box-shadow:0 0 0 4px #120c07,0 0 0 9px #6b4a2a,0 0 0 12px #120c07;margin:10px;background:var(--paper)}
+.bigbtn{border-style:solid;border-color:transparent;border-width:1.2vh 1.6vw;border-image:url(assets/console/ui/btn-green.webp) 70 90 fill / 1.2vh 1.6vw stretch;background:none;padding:.6vh .6vw;text-shadow:2px 2px 0 rgba(0,0,0,.55);border-radius:0}
+.bigbtn.gold{border-image-source:url(assets/console/ui/btn-gold.webp);border-bottom-color:transparent}
+.bigbtn.red{border-image-source:url(assets/console/ui/btn-red.webp);border-bottom-color:transparent}
+.bigbtn.grey{border-image-source:url(assets/console/ui/btn-grey.webp);border-bottom-color:transparent}
+.bigbtn:hover:not(:disabled){filter:brightness(1.08)}
+.bigbtn:active{transform:translateY(2px)}
+.brush .ico{display:block;height:4.4vh;margin:0 auto .4vh}
+.opt.withart{display:flex;gap:.6vw;align-items:center}
+.opt .optart{width:4.8vh;height:4.8vh;object-fit:contain;flex:none}
+.opt .optart.round{width:6vh;height:6vh;border-radius:50%;object-fit:cover;border:2px solid #c9b089}
+.opt .opttext{flex:1;min-width:0}
+.waiting{display:flex;align-items:center;gap:.8vw;text-align:left}
+.waiting .ico{height:2.6em;flex:none}
+.famcard{grid-template-columns:auto 1fr;align-items:start}
+.famcard>*{grid-column:2}
+.famcard .famportrait{grid-column:1;grid-row:1/span 5;width:18vh;height:18vh;border-radius:6px;border:3px solid #6b4a2a;object-fit:cover}
+.clip{display:flex;gap:1vw;align-items:flex-start}
+.clip .clipart{width:40%;flex:none;border:1px solid #5a4632;mix-blend-mode:multiply}
+.bonesnote{display:flex;gap:.8vw;align-items:center}
+.bonesnote img{width:34%;flex:none;mix-blend-mode:multiply;border:1px solid #8a3b2b}
+.stampimg{position:relative;width:min(30vh,70%);transform:rotate(-6deg)}
+.stampimg img{width:100%;display:block}
+.stampimg span{position:absolute;left:18%;right:18%;top:40%;height:20%;display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--head);font-size:2.3vh;line-height:1.05}
+.fate.good .stampimg span{color:#2f7d32}.fate.mid .stampimg span{color:#8a5a12}.fate.bad .stampimg span{color:#a6382a}
+.fate .ledger{font-size:.85em}
+.emblem{height:17vh;margin:0 auto}
+
+/* board */
+.masthead{display:flex;align-items:center;justify-content:center;gap:1.4vw}
+.masthead .orn{height:10.5vh}
+.leadart{display:block;width:auto;max-width:100%;height:auto;max-height:32vh;mix-blend-mode:multiply}
+.leadart.card{max-height:38vh;border:1px solid var(--rule)}
+.leadart.short{max-height:24vh}
+.lead h2.card{font-size:5.4vh}
+.lead .body{font-size:2.7vh}
+.fbox .cameo{width:11vh;height:11vh;object-fit:cover;border-radius:50%;border:1px solid var(--rule);mix-blend-mode:multiply}
+.herostrip{width:100%;height:20vh;object-fit:cover;object-position:center 60%;mix-blend-mode:multiply;border-bottom:1px solid var(--rule);margin-top:1vh}
+#farmWrap,#yard,.yard-row{min-width:0}
+#yard,.yard-row{overflow:hidden}
+#farm{grid-template-columns:repeat(5,minmax(0,1fr))}
+.yard-row .sprite{flex-shrink:1;min-width:0;object-fit:contain;object-position:bottom}
+.yard-row .signpost{flex-shrink:0}

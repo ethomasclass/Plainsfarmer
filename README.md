@@ -58,7 +58,11 @@ directly to each other using the free PeerJS service, and some school filters bl
 ## Editing the game
 
 All rules, numbers, families, and cards live in `engine.js` (`CONFIG`, `CROPS`, `FAMILIES`,
-`SETUP`, `CARDS`). The art is placeholder (CSS shapes and emoji) and lives in `style.css`.
+`SETUP`, `CARDS`).
+
+Art lives in `assets/` (WebP). It was generated with Google Flow from a shared art brief:
+pixel art for the family consoles (`assets/console/`) and 1880s newspaper engravings for the
+class board (`assets/board/`). To swap an image, replace the file with one of the same name.
 
 | File | What it is |
 |---|---|
@@ -68,4 +72,5 @@ All rules, numbers, families, and cards live in `engine.js` (`CONFIG`, `CROPS`, 
 | `engine.js` | Game rules and content |
 | `host.js` | Runs a game inside a browser tab |
 | `common.js` | Connections (PeerJS) and shared drawing code |
+| `assets/` | All game art |
 | `vendor/` | PeerJS (MIT) and qrcode-generator (MIT) |

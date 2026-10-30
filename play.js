@@ -24,7 +24,7 @@ function hideGame() {
   $('#farmWrap').classList.add('hidden');
   $('#main').style.gridTemplateColumns = '1fr';
 }
-const titleBlock = `<h2 style="font-size:clamp(20px,4vh,44px)">PROVE UP!</h2>
+const titleBlock = `<img class="emblem" src="assets/brand/emblem.webp" alt=""><h2 style="font-size:clamp(20px,4vh,44px)">PROVE UP!</h2>
   <p style="font-size:1.2em">Farming the Great Plains, 1884 to 1888</p>`;
 
 // ------------------------------------------------------------ start
@@ -80,7 +80,7 @@ function renderJoin() {
   const famName = k => (DATA ? DATA.FAMILIES.find(f => f.key === k).name : k);
   const offline = joinInfo && joinInfo.offline;
   const picker = offline && DATA ? `<p><b>Which family is your group?</b> (Your teacher may assign one.)</p>
-    <div class="choices">${DATA.FAMILIES.map(f => `<button class="opt${pickedFam === f.key ? ' on' : ''}" data-fam="${f.key}"><b>${esc(f.name)}</b>${esc(f.tag)}</button>`).join('')}</div>` : '';
+    <div class="choices">${DATA.FAMILIES.map(f => `<button class="opt withart${pickedFam === f.key ? ' on' : ''}" data-fam="${f.key}"><img class="optart round" src="${portrait(f.key, 'hopeful')}" alt=""><span class="opttext"><b>${esc(f.name)}</b>${esc(f.tag)}</span></button>`).join('')}</div>` : '';
   $('#panel').innerHTML = `
     <div class="join">${titleBlock}
       ${joinInfo && joinInfo.canJoin ? `${picker}
@@ -109,9 +109,10 @@ function render() {
   $('#farmWrap').classList.remove('hidden');
   $('#main').style.gridTemplateColumns = '';
   const fd = famData();
-  $('#who').innerHTML = `${esc(fd.name)}<small>${esc(me.group)} · ${esc(fd.tag)}</small>`;
-  $('#season').textContent = me.phase === 'lobby' || me.phase === 'setup' ? SEASON[me.phase] : me.phase === 'end' ? 'Game Over' : `${SEASON[me.phase]} ${me.calYear} · Year ${me.year} of 5`;
-  $('#money').innerHTML = `<div class="coin">Cash <b>${money(me.cash)}</b></div><div class="coin debt">Owe bank <b>${money(me.loan)}</b></div>`;
+  $('#who').innerHTML = `<img class="avatar" src="${portrait(me.fam, moodOf(me))}" alt=""><span>${esc(fd.name)}<small>${esc(me.group)} · ${esc(fd.tag)}</small></span>`;
+  const sIcon = { spring: 'spring', summer: 'summer', fall: 'fall', winter: 'winter' }[me.phase];
+  $('#season').innerHTML = (sIcon ? icon(sIcon) : '') + (me.phase === 'lobby' || me.phase === 'setup' ? SEASON[me.phase] : me.phase === 'end' ? 'Game Over' : `${SEASON[me.phase]} ${me.calYear} · Year ${me.year} of 5`);
+  $('#money').innerHTML = `<div class="coin">${icon('cash')}<b>${money(me.cash)}</b></div><div class="coin debt">${icon('debt')}<b>${money(me.loan)}</b></div>`;
   renderFarm();
   const P = { lobby: pLobby, setup: pSetup, spring: pSpring, summer: pSummer, fall: pFall, winter: pWinter, end: pEnd }[me.phase];
   $('#panel').innerHTML = P ? P() : '';
@@ -120,13 +121,17 @@ function render() {
 
 function renderFarm() {
   const fd = famData();
+  const wrap = $('#farmWrap');
+  const bg = backdropFor(me);
+  if (wrap.dataset.bg !== bg) { wrap.style.backgroundImage = `url("${bg}")`; wrap.dataset.bg = bg; }
+  wrap.classList.toggle('ending', me.phase === 'end');
   $('#yard').innerHTML = yardHTML(me, fd.name);
   $('#fence').classList.toggle('hidden', !me.setup.wire);
   const painting = me.phase === 'spring' && !me.springLocked;
   if (!painting) localPlots = null;
   const view = painting && localPlots ? Object.assign({}, me, { plots: localPlots }) : me;
   const showMult = (me.phase === 'summer' || me.phase === 'fall') ? me.mult : null;
-  $('#farm').innerHTML = farmHTML(view, { paint: painting, mult: showMult });
+  $('#farm').innerHTML = farmHTML(view, { paint: painting, mult: showMult, winter: me.phase === 'winter' });
   const fxKind = me.phase === 'summer' && me.card ? me.card.fx : '';
   if (fxKind !== lastFx) {
     const fx = fxHTML(fxKind); const el = $('#fx');
@@ -145,8 +150,9 @@ function paint(i) {
   renderFarm(); updateTally();
 }
 
-const waitMsg = txt => `<div class="waiting">${txt}</div>`;
+const waitMsg = (txt, ic = 'wait') => `<div class="waiting">${icon(ic)}<span>${txt}</span></div>`;
 const teacherWait = 'Locked in! Waiting for your teacher to move to the next season...';
+const lockedWait = () => waitMsg(teacherWait, 'lock');
 
 // ------------------------------------------------------------ phases
 function pLobby() {
@@ -155,7 +161,7 @@ function pLobby() {
     <div class="grow"></div>${waitMsg('Waiting for your teacher to start the game...')}`;
 }
 function famCard(fd) {
-  return `<div class="famcard"><div class="tag">${esc(fd.tag.toUpperCase())}</div><h3>${esc(fd.name)}</h3>
+  return `<div class="famcard"><img class="famportrait" src="${portrait(fd.key, 'hopeful')}" alt=""><div class="tag">${esc(fd.tag.toUpperCase())}</div><h3>${esc(fd.name)}</h3>
     <p>${esc(fd.story)}</p><div class="trait"><b>${esc(fd.trait)}:</b> ${esc(fd.traitText)}</div>
     <p>Starting money: <b>${money(fd.cash)}</b>, including a <b>${money(DATA.CONFIG.loan)}</b> loan from the bank.</p></div>`;
 }
@@ -163,8 +169,9 @@ function famCard(fd) {
 function pSetup() {
   const S = DATA.SETUP, s = me.setup, fd = famData();
   const cost = setupCost(s), left = fd.cash - cost, locked = me.setupLocked;
-  const opt = (group, key, o, on) => `<button class="opt${on ? ' on' : ''}" data-set="${group}" data-val="${key}" ${locked ? 'disabled' : ''}>
-      <span class="cost">${o.cost ? money(o.cost) : 'FREE'}</span><b>${esc(o.label)}</b>${esc(o.desc)}</button>`;
+  const OPT_ART = { west: 'sprites/sign-claim', east: 'icons/icon-train', sod: 'sprites/house-sod', lumber: 'sprites/house-lumber', dry: 'icons/icon-clear', windmill: 'sprites/windmill', wire: 'sprites/fence-wire' };
+  const opt = (group, key, o, on) => `<button class="opt withart${on ? ' on' : ''}" data-set="${group}" data-val="${key}" ${locked ? 'disabled' : ''}>
+      <img class="optart" src="${ART}console/${OPT_ART[key]}.webp" alt=""><span class="opttext"><span class="cost">${o.cost ? money(o.cost) : 'FREE'}</span><b>${esc(o.label)}</b>${esc(o.desc)}</span></button>`;
   return `<h2>Set Up Your Homestead</h2>
     <div class="choice-group"><div class="label">1. Where will you farm?</div><div class="choices">
       ${Object.entries(S.location).map(([k, o]) => opt('location', k, o, s.location === k)).join('')}</div></div>
@@ -175,7 +182,7 @@ function pSetup() {
     <div class="tally"><span>Setup costs: ${money(cost)}</span><span>Left for planting: <span style="color:${left < DATA.CONFIG.minPlantMoney ? 'var(--bad)' : 'var(--good)'}">${money(left)}</span></span></div>
     ${left < DATA.CONFIG.minPlantMoney ? `<p style="color:var(--bad);font-weight:800">Careful! Save at least ${money(DATA.CONFIG.minPlantMoney)} so you can plant your fields.</p>` : ''}
     <div class="grow"></div>
-    ${locked ? waitMsg(teacherWait) : `<button class="bigbtn" data-act="lock">Lock In My Homestead</button>`}`;
+    ${locked ? lockedWait() : `<button class="bigbtn" data-act="lock">Lock In My Homestead</button>`}`;
 }
 function setupCost(s) {
   const S = DATA.SETUP; let c = S.location[s.location].cost + S.house[s.house].cost;
@@ -184,19 +191,19 @@ function setupCost(s) {
 
 function pSpring() {
   const C = DATA.CROPS, locked = me.springLocked;
-  const b = (k, o) => `<button class="brush${brush === k ? ' on' : ''}" data-brush="${k}" ${locked ? 'disabled' : ''}><span>${ICON[k]}</span>${o.name}<br><small>${money(o.cost)} to plant</small></button>`;
+  const b = (k, o) => `<button class="brush${brush === k ? ' on' : ''}" data-brush="${k}" ${locked ? 'disabled' : ''}>${icon(CROP_ICON[k])}${o.name}<br><small>${money(o.cost)} to plant</small></button>`;
   return `<h2>Spring ${me.calYear}: Plant Your Fields</h2>
     <p>Pick a crop, then click plots on your farm to plant it. Each plot is 10 acres. You pay to plant now and sell in the fall.</p>
     ${me.sick ? `<p style="color:var(--bad);font-weight:800">Your family is still sick from last winter, so ${me.sick} plots can't be worked this year.</p>` : ''}
     <div class="brushes">${Object.entries(C).map(([k, o]) => b(k, o)).join('')}
-      <button class="brush${brush === 'clear' ? ' on' : ''}" data-brush="clear" ${locked ? 'disabled' : ''}><span>⛏️</span>Clear<br><small>remove</small></button></div>
+      <button class="brush${brush === 'clear' ? ' on' : ''}" data-brush="clear" ${locked ? 'disabled' : ''}>${icon('clear')}Clear<br><small>remove</small></button></div>
     <p style="font-size:.85em">Usual selling price per plot: ${Object.values(C).map(o => `${o.name} ${money(o.base)}`).join(', ')}. The weather and the market will change that.</p>
     <div class="tally" id="tally"></div>
     <div class="grow"></div>
-    ${me.awaitUnlock ? unlockHTML() : locked ? (selfPaced() ? '' : waitMsg(teacherWait)) : `<button class="bigbtn" data-act="lock">Lock In My Planting</button>`}`;
+    ${me.awaitUnlock ? unlockHTML() : locked ? (selfPaced() ? '' : lockedWait()) : `<button class="bigbtn" data-act="lock">Lock In My Planting</button>`}`;
 }
 function unlockHTML() {
-  return `<div class="waiting">Planting locked! Now look at the board. When your teacher shows this year's news, type the <b>unlock word</b>:</div>
+  return `${waitMsg("Planting locked! Now look at the board. When your teacher shows this year's news, type the <b>unlock word</b>:", 'lock')}
     <div class="row"><input id="unlock" maxlength="12" autocomplete="off" placeholder="Unlock word" style="flex:1;font:inherit;font-size:1.2em;padding:1vh 1vw;border:3px solid #c9b089;border-radius:6px;text-transform:uppercase">
     <button class="bigbtn gold" id="unlockBtn">Reveal</button></div>`;
 }
@@ -209,10 +216,11 @@ function updateTally() {
 }
 
 function clipHTML(c) {
-  return `<div class="clip"><div class="era">${esc(c.era)}</div><h3>${esc(c.headline)}</h3><p>${esc(c.text)}</p></div>
+  return `<div class="clip"><img class="clipart" src="${cardArt(c.id)}" alt=""><div><div class="era">${esc(c.era)}</div><h3>${esc(c.headline)}</h3><p>${esc(c.text)}</p></div></div>
     ${c.why ? `<div class="why"><b>Think about it:</b> ${esc(c.why)}</div>` : ''}`;
 }
 function notesHTML(n) { return `<ul class="notes">${n.map(([k, t]) => `<li class="${k}">${esc(t)}</li>`).join('')}</ul>`; }
+const lineIcon = l => l.crop ? icon(CROP_ICON[l.crop]) : /egg/i.test(l.label) ? icon('eggs') : /doctor/i.test(l.label) ? icon('doctor') : /burn/i.test(l.label) ? icon('fire') : icon('cash');
 
 function pSummer() {
   const c = me.card;
@@ -229,7 +237,7 @@ function pSummer() {
 
 function pFall() {
   const h = me.harvest;
-  const rows = h.lines.map(l => `<tr><td>${ICON[l.crop] || '🥚'} ${esc(l.label)}</td><td class="${l.total < 0 ? 'neg' : ''}">${money(l.total)}</td></tr>`).join('');
+  const rows = h.lines.map(l => `<tr><td>${lineIcon(l)} ${esc(l.label)}</td><td class="${l.total < 0 ? 'neg' : ''}">${money(l.total)}</td></tr>`).join('');
   return `<h2>Fall ${me.calYear}: Harvest Time</h2>
     <p>You hauled your crops to the railroad and sold them. After <b>${esc(headTitle(me.card.headline))}</b>, here is what you earned:</p>
     <table class="ledger">${rows || '<tr><td>Nothing planted, nothing sold.</td><td>$0</td></tr>'}
@@ -242,10 +250,10 @@ function pFall() {
 
 function pWinter() {
   const b = me.bill, o = me.options, last = me.year >= 5;
-  const boneNote = me.log.some(l => l.startsWith(`Year ${me.year}: sold bison`)) ? `<div class="why"><b>About the bones:</b> ${esc(DATA.BONES_NOTE)}</div>` : '';
+  const boneNote = me.log.some(l => l.startsWith(`Year ${me.year}: sold bison`)) ? `<div class="why bonesnote"><img src="${sceneArt('bones')}" alt=""><span><b>About the bones:</b> ${esc(DATA.BONES_NOTE)}</span></div>` : '';
   const table = `<table class="ledger">
-      <tr><td>Food, fuel, and clothes for the winter</td><td>${money(b.living)}</td></tr>
-      <tr><td>Interest on your ${money(me.loan)} loan${me.fam === 'obrien' ? " (half, veteran's credit)" : ''}</td><td>${money(b.interest)}</td></tr>
+      <tr><td>${icon('winter')} Food, fuel, and clothes for the winter</td><td>${money(b.living)}</td></tr>
+      <tr><td>${icon('debt')} Interest on your ${money(me.loan)} loan${me.fam === 'obrien' ? " (half, veteran's credit)" : ''}</td><td>${money(b.interest)}</td></tr>
       ${b.extra ? `<tr><td>Higher interest this year</td><td>${money(b.extra)}</td></tr>` : ''}
       <tr class="total"><td>Total due</td><td>${money(b.total)}</td></tr></table>`;
   if (me.paid) {
@@ -258,10 +266,10 @@ function pWinter() {
   let opts = '';
   if (short > 0) {
     opts = `<p style="color:var(--bad);font-weight:800">You are ${money(short)} short. What will your family do?</p><div class="choices">
-      ${o.bones ? `<button class="opt" data-winter="bones"><span class="cost">+${money(o.bones)}</span><b>Gather bison bones</b>Pick up bison bones on the prairie and sell them to a bone buyer.</button>` : ''}
-      ${o.mortgage ? `<button class="opt" data-winter="mortgage"><span class="cost">+${money(DATA.CONFIG.mortgageCash)}</span><b>Mortgage your animals and tools</b>Get ${money(DATA.CONFIG.mortgageCash)} now, but you will owe the bank ${money(DATA.CONFIG.mortgageDebt)} more.</button>` : ''}
-      <button class="opt" data-winter="giveup"><b>Give up and go back east</b>Leave the claim behind and head home.</button>
-      ${!o.bones && !o.mortgage ? `<button class="opt" data-winter="lose"><b>Hand the farm to the bank</b>There is nothing left to sell.</button>` : ''}
+      ${o.bones ? `<button class="opt withart" data-winter="bones">${icon('bones', 'optart')}<span class="opttext"><span class="cost">+${money(o.bones)}</span><b>Gather bison bones</b>Pick up bison bones on the prairie and sell them to a bone buyer.</span></button>` : ''}
+      ${o.mortgage ? `<button class="opt withart" data-winter="mortgage">${icon('mortgage', 'optart')}<span class="opttext"><span class="cost">+${money(DATA.CONFIG.mortgageCash)}</span><b>Mortgage your animals and tools</b>Get ${money(DATA.CONFIG.mortgageCash)} now, but you will owe the bank ${money(DATA.CONFIG.mortgageDebt)} more.</span></button>` : ''}
+      <button class="opt withart" data-winter="giveup">${icon('giveup', 'optart')}<span class="opttext"><b>Give up and go back east</b>Leave the claim behind and head home.</span></button>
+      ${!o.bones && !o.mortgage ? `<button class="opt withart" data-winter="lose">${icon('lock', 'optart')}<span class="opttext"><b>Hand the farm to the bank</b>There is nothing left to sell.</span></button>` : ''}
     </div>${boneNote}`;
   }
   return `<h2>Winter ${me.calYear}: The Bank Comes Calling</h2>${table}
@@ -276,14 +284,14 @@ function pEnd() {
     const c = DATA.CARDS.find(x => x.id === h.card);
     return `<tr><td>${DATA.CONFIG.startYear + h.year - 1}: ${esc(c ? headTitle(c.headline) : '')}</td><td class="${h.profit < 0 ? 'neg' : 'pos'}">${money(h.profit)}</td></tr>`;
   }).join('');
-  return `<div class="fate ${tone}"><div class="stamp">${esc(F.title)}</div><p>${esc(F.text)}</p>
+  return `<div class="fate ${tone}"><div class="stampimg"><img src="${ART}console/stamps/stamp-${me.fate || 'proved'}.webp" alt=""><span>${esc(F.title)}</span></div><p>${esc(F.text)}</p>
     <table class="ledger" style="max-width:95%">${hist}<tr class="total"><td>Final cash / still owed to bank</td><td>${money(me.cash)} / ${money(me.loan)}</td></tr></table>
     ${ROOM || (me.gated) ? waitMsg('Look up at the board for the class results.') : ''}
     ${ROOM ? '' : `<button class="bigbtn grey" id="againBtn">Play Again</button>`}</div>`;
 }
 
 function nextBtn(label, disabled) {
-  if (!selfPaced() && me.ready) return waitMsg(teacherWait);
+  if (!selfPaced() && me.ready) return lockedWait();
   return `<button class="bigbtn" data-act="lock" ${disabled ? 'disabled' : ''}>${label}</button>`;
 }
 
