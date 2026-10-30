@@ -122,9 +122,17 @@ function render() {
 function renderFarm() {
   const fd = famData();
   const wrap = $('#farmWrap');
-  const bg = backdropFor(me);
-  if (wrap.dataset.bg !== bg) { wrap.style.backgroundImage = `url("${bg}")`; wrap.dataset.bg = bg; }
-  wrap.classList.toggle('ending', me.phase === 'end');
+  const bg = backdropFor(me), ending = me.phase === 'end';
+  if (wrap.dataset.bg !== bg + ending) {
+    wrap.style.backgroundImage = ending ? `url("${bg}")` : '';
+    $('#yard').style.backgroundImage = ending ? 'none' : `url("${bg}")`;
+    wrap.dataset.bg = bg + ending;
+  }
+  wrap.classList.toggle('ending', ending);
+  const cid = me.card && me.card.id;
+  wrap.dataset.ground = me.phase === 'winter' || (me.phase === 'summer' && (cid === 'killingwinter' || cid === 'childrensblizzard')) ? 'snow'
+    : me.phase === 'fall' ? 'fall' : me.phase === 'summer' && (cid === 'drought' || cid === 'locusts') ? 'dry'
+    : me.phase === 'summer' && cid === 'fire' ? 'burnt' : 'grass';
   $('#yard').innerHTML = yardHTML(me, fd.name);
   $('#fence').classList.toggle('hidden', !me.setup.wire);
   const painting = me.phase === 'spring' && !me.springLocked;

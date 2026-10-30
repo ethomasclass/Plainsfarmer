@@ -317,3 +317,22 @@ button{font-family:inherit;cursor:pointer}
 #farm{grid-template-columns:repeat(5,minmax(0,1fr))}
 .yard-row .sprite{flex-shrink:1;min-width:0;object-fit:contain;object-position:bottom}
 .yard-row .signpost{flex-shrink:0}
+
+/* ---- grounded yard: the backdrop lives in the yard strip so props stand on the land ---- */
+#farmWrap{--ground:#5b8d3c;--ground2:#4f7f34;grid-template-rows:40% 1fr;background-color:var(--ground);
+  background-image:none;background-size:cover;background-position:center}
+#farmWrap:not(.ending){background:repeating-linear-gradient(0deg,var(--ground) 0 9px,var(--ground2) 9px 12px)}
+#farmWrap[data-ground="fall"]{--ground:#a7843f;--ground2:#93733a}
+#farmWrap[data-ground="snow"]{--ground:#e3eaf1;--ground2:#d3dde8}
+#farmWrap[data-ground="dry"]{--ground:#a98a55;--ground2:#97794a}
+#farmWrap[data-ground="burnt"]{--ground:#4a3a2c;--ground2:#3a2d22}
+#farmWrap.ending{background-size:cover!important;background-position:center!important}
+#yard{position:relative;background-repeat:no-repeat;background-size:cover;background-position:center top;padding:0 2.5%}
+#yard::after{content:'';position:absolute;left:0;right:0;bottom:0;height:22%;background:linear-gradient(transparent,var(--ground));pointer-events:none}
+.yard-row{position:relative;z-index:1;padding-bottom:1.2vh}
+.sprite{filter:drop-shadow(0 4px 2px rgba(0,0,0,.35))}
+.sprite.tree{height:72%}
+.sprite.house{height:52%}
+.sprite.mill{height:80%}
+.signpost{height:58%}
+#fx{z-index:2}
