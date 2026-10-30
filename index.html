@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prove Up! Farming the Great Plains</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Old+Standard+TT:wght@400;700&family=Press+Start+2P&family=Rye&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .home{display:grid;grid-template-columns:1fr 1fr;gap:3vw;padding-top:3vh;min-height:0}
+  .home a.door{display:flex;flex-direction:column;gap:1.4vh;text-decoration:none;color:var(--ink);border:3px solid var(--rule);background:#fbf4e3;padding:3vh 2.4vw;box-shadow:6px 6px 0 rgba(0,0,0,.18);transition:transform .1s}
+  .home a.door:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 rgba(0,0,0,.22)}
+  .door .k{font-size:2vh;text-transform:uppercase;letter-spacing:.12em;color:#6b5a3e}
+  .door h2{margin:0;font-family:var(--head);font-weight:400;font-size:6vh;line-height:1}
+  .door p{margin:0;font-size:2.6vh;line-height:1.4}
+  .door .go{margin-top:auto;font-family:var(--head);font-size:3vh;background:#2b2118;color:var(--paper);padding:1.2vh 1.4vw;align-self:start}
+  .about{grid-column:1/-1;font-size:2.3vh;line-height:1.45;border-top:1px solid var(--rule);padding-top:2vh;columns:2;column-gap:3vw}
+  .about p{margin:0 0 1.2vh}
+</style>
+</head>
+<body class="board">
+<div id="paper" style="grid-template-rows:auto auto 1fr">
+  <div class="masthead"><h1>The Prairie Herald</h1></div>
+  <div class="dateline"><span>Prove Up! Farming the Great Plains</span><span>1884 to 1888</span><span>A US History Game</span></div>
+  <div class="home">
+    <a class="door" href="board.html">
+      <span class="k">For teachers</span><h2>Run a Class Game</h2>
+      <p>Open the class board on your projector. It gives you a 5-letter code and a QR code. Student groups join from their own computers.</p>
+      <p>Choose <b>Teacher-Paced</b> (you reveal each season) or <b>Self-Paced</b> (groups move on their own).</p>
+      <span class="go">Open the Class Board</span>
+    </a>
+    <a class="door" href="play.html">
+      <span class="k">For students</span><h2>Join a Game</h2>
+      <p>Your group is a family moving west to claim land under the Homestead Act. Live on your claim for 5 years and the land is yours.</p>
+      <p>Type the code on the board, or practice on your own.</p>
+      <span class="go">Join a Game</span>
+    </a>
+    <div class="about">
+      <p><b>How it works.</b> Each group sets up a homestead (land, house, tools), then plays 5 years. Every year: plant in spring, face a chance card in summer based on real events (drought, grasshoppers, the Children's Blizzard, railroad rates, the Dawes Act), sell in the fall, and pay the bank in winter. At the end, each family either proves up, stays in debt, loses the farm, or goes back east.</p>
+      <p><b>About 30 minutes.</b> Nothing to install and no student logins. Keep the board tab open during the game; it is the game. If your school network blocks the live connection, use <b>No-Connection Mode</b> on the board: every group plays on its own computer and you reveal each year's news with an unlock word.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

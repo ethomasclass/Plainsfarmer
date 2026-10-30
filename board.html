@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Prairie Herald: Class Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Old+Standard+TT:wght@400;700&family=Press+Start+2P&family=Rye&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="board">
+<div id="paper">
+  <div class="masthead"><h1>The Prairie Herald</h1></div>
+  <div class="dateline"><span id="dl-left">Homestead County</span><span id="dl-mid"></span><span id="dl-right"></span></div>
+  <div class="columns">
+    <div class="lead" id="lead"></div>
+    <div class="county"><h3 id="countyTitle">The County Map</h3><div class="famgrid" id="fams"></div></div>
+  </div>
+  <div class="controls">
+    <span class="status" id="status"></span><span class="spacer" style="flex:1"></span>
+    <button class="light" id="resetBtn">New Game</button>
+    <button id="advBtn"></button>
+  </div>
+</div>
+<div id="toast"></div>
+<script src="vendor/qrcode.js"></script>
+<script src="vendor/peerjs.min.js"></script>
+<script src="engine.js"></script>
+<script src="common.js"></script>
+<script src="host.js"></script>
+<script src="board.js"></script>
+</body>
+</html>
