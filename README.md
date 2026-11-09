@@ -38,6 +38,24 @@ Nothing to install, no accounts, no student logins. It runs entirely in the brow
 Test the live code once on your school Wi-Fi before class. Live games connect computers
 directly to each other using the free PeerJS service, and some school filters block that.
 
+## Saving a class to finish another day
+
+1. On the board, click **Save / Load Class**, type a name (for example, **Period 2**), and click **Save**.
+   From then on, the board saves that class after every change. You can close the tab at any time.
+2. Each class period gets its own save, so Period 2 and Period 3 never overwrite each other.
+3. **To pick up again:** click **Save / Load Class**, then **Open** next to the class. The game comes back
+   in the same season with the **same join code**. Groups open the site, type the code, and click their
+   family under "Already joined?" A group on the same computer as before goes straight back in.
+4. **Different computer tomorrow?** Click **Download Save File** before you leave. On the other computer,
+   click **Save / Load Class**, then **Open a save file from another computer**.
+
+Saves live in that browser on that computer. Clearing the browser's history erases them, so download a
+save file if the class matters.
+
+**No-Connection Mode** saves work the same way on the board. Each group's game is saved on its own
+computer under the class code: tomorrow, the group types the same code and picks up where it left off.
+Groups that share a laptop cart don't overwrite each other, because each class code is saved separately.
+
 ## The game
 
 * **Families**: the Freemans (Exodusters headed to Nicodemus, Kansas), the Larsens

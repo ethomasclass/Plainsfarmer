@@ -19,8 +19,24 @@
   </div>
   <div class="controls">
     <span class="status" id="status"></span><span class="spacer" style="flex:1"></span>
+    <button class="light" id="savesBtn">Save / Load Class</button>
     <button class="light" id="resetBtn">New Game</button>
     <button id="advBtn"></button>
+  </div>
+</div>
+<div id="savesPanel" class="savepanel hidden">
+  <div class="sp-inner">
+    <div class="sp-head"><h3>Save or Load a Class</h3><button class="light" id="spClose">Close</button></div>
+    <p id="spCurrent" class="sp-cur"></p>
+    <div class="sp-saveas">
+      <input id="spName" maxlength="40" placeholder="Name this class, like Period 2" autocomplete="off">
+      <button id="spSave">Save</button>
+      <button class="light" id="spDownload">Download Save File</button>
+    </div>
+    <p class="sp-tip">To pick up another day: open the class here. It keeps the same join code, so each group opens the game, types the code, and clicks its family under "Already joined?"</p>
+    <h4>Saved classes on this computer</h4>
+    <div id="spList"></div>
+    <label class="sp-file">Open a save file from another computer<input type="file" id="spFile" accept=".json,application/json" hidden></label>
   </div>
 </div>
 <div id="toast"></div>

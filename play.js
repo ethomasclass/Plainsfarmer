@@ -5,15 +5,21 @@ let pickedFam = null;
 const params = new URLSearchParams(location.search);
 const ROOM = (params.get('room') || '').toUpperCase().replace(/[^A-Z]/g, '');
 const fidKey = 'proveup-fid-' + (ROOM || 'offline');
-const OFFLINE_KEY = 'proveup-offline';
+const OFF_PREFIX = 'proveup-offline-';
+const offKey = code => OFF_PREFIX + (code || 'practice');
+let OFFLINE_KEY = null;
+// Remember which family this computer played, so a group gets straight back in another day.
+const getFid = () => store.get(fidKey) || local.get(fidKey);
+const setFid = id => { store.set(fidKey, id); local.set(fidKey, id); };
+const clearFid = () => { store.del(fidKey); local.del(fidKey); };
 
 Net.on('data', m => { DATA = m.data; });
 Net.on('joininfo', m => { joinInfo = m; me = null; renderJoin(); });
-Net.on('joined', m => { store.set(fidKey, m.fid); const s = local.get(OFFLINE_KEY); if (!ROOM && s) { s.fid = m.fid; local.set(OFFLINE_KEY, s); } });
-Net.on('kicked', () => { store.del(fidKey); me = null; toast('Your teacher started a new game. Join again.'); });
+Net.on('joined', m => { setFid(m.fid); const s = OFFLINE_KEY && local.get(OFFLINE_KEY); if (!ROOM && s) { s.fid = m.fid; local.set(OFFLINE_KEY, s); } });
+Net.on('kicked', () => { clearFid(); me = null; toast('Your teacher started a new game. Join again.'); });
 Net.on('error', m => toast(m.msg));
 Net.on('netError', m => { if (!me && m.kind === 'noroom') renderConnecting(`We can't find a game with the code <b>${esc(ROOM)}</b> yet. Check the code on the board. We'll keep trying...`); else if (!me && m.kind === 'server') renderConnecting('Having trouble connecting. If this keeps happening, ask your teacher about No-Connection Mode.'); });
-Net.on('state', m => { game = m.game; me = m.me; if (me) store.set(fidKey, me.id); render(); });
+Net.on('state', m => { game = m.game; me = m.me; if (me) setFid(me.id); render(); });
 
 const famData = () => DATA.FAMILIES.find(f => f.key === me.fam);
 const selfPaced = () => game && game.mode === 'self';
@@ -30,7 +36,7 @@ const titleBlock = `<img class="emblem" src="assets/brand/emblem.webp" alt=""><h
 // ------------------------------------------------------------ start
 if (ROOM) {
   renderConnecting('Connecting to your class game...');
-  Net.start(() => ({ t: 'hello', role: 'player', fid: store.get(fidKey) }), PeerClientTransport(ROOM));
+  Net.start(() => ({ t: 'hello', role: 'player', fid: getFid() }), PeerClientTransport(ROOM));
 } else renderStart();
 
 function renderConnecting(msg) {
@@ -39,26 +45,49 @@ function renderConnecting(msg) {
     <p style="font-size:.85em">Game code: <b>${esc(ROOM)}</b> · <a href="play.html">Use a different code</a></p></div>`;
 }
 
+function offlineSaves() {
+  const out = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith(OFF_PREFIX)) continue;
+      const v = local.get(k);
+      if (v && v.game && v.game.families.length && v.game.phase !== 'end') out.push(Object.assign({ key: k }, v));
+    }
+  } catch (e) {}
+  return out;
+}
+function saveLabel(v) {
+  const f = v.game.families.find(x => x.id === v.fid) || v.game.families[0];
+  const fam = Engine.DATA.FAMILIES.find(x => x.key === f.fam);
+  const when = f.phase === 'setup' ? 'setting up' : f.phase === 'end' ? 'finished' : `${SEASON[f.phase]} ${Engine.CONFIG.startYear + f.year - 1}`;
+  return `${esc(f.group)} · ${esc(fam.name)}<br><small>${v.code ? 'Class code ' + esc(v.code) : 'Practice game'} · ${when}</small>`;
+}
+
 function renderStart() {
   hideGame();
-  const saved = local.get(OFFLINE_KEY);
-  const canResume = saved && saved.game && saved.game.families.length && saved.game.phase !== 'end';
+  const saves = offlineSaves();
   $('#panel').innerHTML = `<div class="join">${titleBlock}
     <p>Your group is a family moving west to claim land under the <b>Homestead Act</b>.
        Live on your claim for 5 years and the land is yours. Can your family make it?</p>
     <input id="code" maxlength="6" placeholder="Type the code on the board" autocomplete="off" style="text-transform:uppercase">
     <button class="bigbtn" id="goBtn">Join</button>
-    ${canResume ? `<button class="bigbtn gold" id="resumeBtn">Continue Your Saved Game</button>` : ''}
+    ${saves.length ? `<p style="margin-top:1vh"><b>Pick up where you left off:</b></p>
+      <div class="rejoin">${saves.map((v, i) => `<button data-resume="${i}">${saveLabel(v)}</button>`).join('')}</div>` : ''}
     <button class="bigbtn grey" id="soloBtn">Practice on My Own</button></div>`;
   const go = () => {
     const v = $('#code').value.trim().toUpperCase();
     if (/^[A-Z]{5}$/.test(v)) location.search = '?room=' + v;
-    else if (/^\d{4}$/.test(v)) startOffline(v);
+    else if (/^\d{4}$/.test(v)) {
+      const sv = local.get(offKey(v));
+      if (sv && sv.game && sv.game.families.length && sv.game.phase !== 'end') { toast('Welcome back! Picking up where you left off.'); startOffline(v, sv); }
+      else startOffline(v);
+    }
     else toast('Codes are 5 letters (live game) or 4 numbers (no-connection game).');
   };
   $('#goBtn').onclick = go; $('#code').onkeydown = e => { if (e.key === 'Enter') go(); };
   $('#soloBtn').onclick = () => startOffline(null);
-  if ($('#resumeBtn')) $('#resumeBtn').onclick = () => startOffline(saved.code, saved);
+  document.querySelectorAll('[data-resume]').forEach(b => b.onclick = () => { const v = saves[+b.dataset.resume]; startOffline(v.code, v); });
   $('#code').focus();
 }
 
@@ -66,11 +95,12 @@ function renderStart() {
 // same chance cards as the board, unlocked with the word the teacher shows.
 function startOffline(code, saved) {
   let game;
+  OFFLINE_KEY = offKey(code);
   if (saved && saved.game) game = saved.game;
-  else { local.del(OFFLINE_KEY); store.del(fidKey); game = Engine.newGame(); game.mode = 'self'; game.phase = 'running'; }
+  else { local.del(OFFLINE_KEY); clearFid(); game = Engine.newGame(); game.mode = 'self'; game.phase = 'running'; }
   const host = new GameHost({ game, offline: { code }, onChange: g => { const s = local.get(OFFLINE_KEY) || {}; local.set(OFFLINE_KEY, { code, game: g, fid: s.fid }); } });
-  if (saved && saved.fid) store.set(fidKey, saved.fid);
-  Net.start(() => ({ t: 'hello', role: 'player', fid: store.get(fidKey) }), LocalTransport(host, 'me', code ? 'class code ' + code : 'practice mode'));
+  if (saved && saved.fid) setFid(saved.fid);
+  Net.start(() => ({ t: 'hello', role: 'player', fid: getFid() }), LocalTransport(host, 'me', code ? 'class code ' + code : 'practice mode'));
 }
 
 // ------------------------------------------------------------ join screen
@@ -86,7 +116,7 @@ function renderJoin() {
       ${joinInfo && joinInfo.canJoin ? `${picker}
         <input id="group" maxlength="24" placeholder="Your group name (example: Table 3)">
         <button class="bigbtn" id="joinBtn" ${offline && !pickedFam ? 'disabled' : ''}>Join the Game</button>` :
-        `<div class="waiting">The game has already started.</div>`}
+        (fams.length ? `<div class="waiting">Welcome back! Your class game is already going.</div>` : `<div class="waiting">The game has already started.</div>`)}
       ${fams.length && !offline ? `<p style="margin-top:1vh"><b>Already joined?</b> Pick your family to get back in:</p>
         <div class="rejoin">${fams.map(f => `<button data-fid="${f.id}">${esc(f.group)}<br><small>${esc(famName(f.fam))}</small></button>`).join('')}</div>` : ''}
     </div>`;
@@ -306,7 +336,7 @@ function nextBtn(label, disabled) {
 // ------------------------------------------------------------ events
 function wire() {
   const ag = $('#againBtn');
-  if (ag) ag.onclick = () => { local.del(OFFLINE_KEY); store.del(fidKey); location.href = 'play.html'; };
+  if (ag) ag.onclick = () => { if (OFFLINE_KEY) local.del(OFFLINE_KEY); clearFid(); location.href = 'play.html'; };
   const ub = $('#unlockBtn');
   if (ub) { const u = () => Net.send({ t: 'unlock', word: $('#unlock').value }); ub.onclick = u; $('#unlock').onkeydown = e => { if (e.key === 'Enter') u(); }; }
   document.querySelectorAll('[data-act="lock"]').forEach(b => b.onclick = () => { b.disabled = true; Net.send({ t: 'lock' }); });

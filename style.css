@@ -336,3 +336,24 @@ button{font-family:inherit;cursor:pointer}
 .sprite.mill{height:80%}
 .signpost{height:58%}
 #fx{z-index:2}
+
+/* ---- class saves panel (board) ---- */
+.savepanel{position:fixed;inset:0;background:rgba(30,20,10,.55);display:flex;align-items:center;justify-content:center;z-index:40}
+.sp-inner{width:min(1100px,86vw);max-height:86vh;overflow:auto;background:var(--paper);border:3px double var(--rule);box-shadow:8px 8px 0 rgba(0,0,0,.3);padding:2.4vh 2vw;font-family:var(--news);color:var(--ink)}
+.sp-head{display:flex;justify-content:space-between;align-items:center;border-bottom:3px double var(--rule);padding-bottom:1vh;margin-bottom:1.2vh}
+.sp-head h3{margin:0;font-family:var(--head);font-weight:400;font-size:4.2vh}
+.sp-inner h4{margin:2vh 0 .8vh;font-family:var(--head);font-weight:400;font-size:2.8vh;border-bottom:1px solid var(--rule)}
+.sp-inner button,.sp-file{font-family:var(--head);font-size:2.2vh;padding:.8vh 1.2vw;border:2px solid #2b2118;border-radius:4px;background:#2b2118;color:var(--paper);cursor:pointer}
+.sp-inner button.light,.sp-file{background:transparent;color:var(--ink)}
+.sp-cur{font-size:2.3vh;margin:0 0 1vh;font-weight:700}
+.sp-saveas{display:flex;gap:.8vw}
+.sp-saveas input{flex:1;font-family:var(--news);font-size:2.4vh;padding:.8vh 1vw;border:2px solid var(--rule);background:#fffaf0}
+.sp-tip{font-size:2vh;font-style:italic;margin:1.2vh 0 0}
+.sp-row{display:grid;grid-template-columns:1fr auto auto;gap:1vw;align-items:center;padding:1vh .6vw;border-bottom:1px dotted var(--rule)}
+.sp-row.cur{background:#efe2c3}
+.sp-row b{display:block;font-size:2.6vh}
+.sp-row span{display:block;font-size:2vh}
+.sp-row small{font-size:1.7vh;color:#6b5a3e}
+.sp-row em{font-size:2vh;font-weight:700}
+.sp-empty{font-size:2.2vh;font-style:italic}
+.sp-file{display:inline-block;margin-top:1.6vh}

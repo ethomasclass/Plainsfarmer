@@ -8,6 +8,8 @@ const BASE = location.href.replace(/[?#].*$/, '').replace(/[^/]*$/, '');
 let DATA = Engine.DATA, game = null, fams = [], host = null, room = null, peer = null, takenTries = 0, resetting = false;
 const net = { state: 'connecting' };
 let offline = null;
+let saveId = null;                       // which named class save this board is writing to
+const SAVES_KEY = 'proveup-class-saves';
 
 Net.on('data', m => { DATA = m.data; });
 Net.on('error', m => toast(m.msg));
@@ -17,7 +19,7 @@ Net.on('state', m => { game = m.game; fams = m.families; render(); });
 function startLive(sv) {
   room = sv ? sv.room : newRoom();
   let t = null;
-  const save = () => { if (!resetting) local.set(BOARD_KEY, { room, game: host.game }); };
+  const save = () => { if (resetting) return; local.set(BOARD_KEY, { room, game: host.game, saveId }); writeSlot(); };
   host = new GameHost({
     game: sv ? sv.game : Engine.newGame(),
     extra: () => ({ room, joinUrl: BASE + 'play.html?room=' + room, net: net.state }),
@@ -160,7 +162,7 @@ function renderControls() {
       winter: game.year >= 5 ? 'Final Results' : `Begin Spring ${game.calYear + 1}` }[p] || '';
   }
   if (p !== 'lobby' && net.state !== 'ready') status += ' · ' + (NET_TEXT[net.state] || NET_TEXT.connecting)[0];
-  $('#status').textContent = status;
+  $('#status').textContent = status + saveNote();
   adv.textContent = label; adv.classList.toggle('hidden', !label);
   adv.disabled = p === 'lobby' && !fams.length;
 }
@@ -186,6 +188,115 @@ $('#resetBtn').onclick = () => {
 };
 
 // =====================================================================
+// CLASS SAVES
+// Each class period gets a named save. Once named, the board keeps that save
+// up to date after every change, so you can close the tab and pick up tomorrow.
+// A save file (.json) is a backup you can open on any computer.
+// =====================================================================
+const slots = () => local.get(SAVES_KEY) || [];
+const putSlots = a => local.set(SAVES_KEY, a);
+function snapshot() {
+  return offline ? { kind: 'offline', offline } : { kind: 'live', room, game: host && host.game };
+}
+function describeSave(s) {
+  const C = Engine.CONFIG;
+  if (s.kind === 'offline') {
+    const o = s.offline, cal = C.startYear + o.year - 1;
+    return `No-Connection Mode · code ${o.code} · ${o.phase === 'lobby' ? 'not started' : o.phase === 'end' ? 'finished' : o.phase === 'setup' ? 'setting up' : `${SEASON[o.phase]} ${cal}`}`;
+  }
+  const g = s.game, n = g.families.length, cal = C.startYear + g.year - 1;
+  const where = g.phase === 'lobby' ? 'not started' : g.phase === 'end' ? 'finished' : g.phase === 'running' ? 'self-paced' : g.phase === 'setup' ? 'setting up' : `${SEASON[g.phase]} ${cal}`;
+  return `Code ${s.room} · ${where} · ${n} ${n === 1 ? 'family' : 'families'}`;
+}
+function saveNote() {
+  if (!saveId) return '';
+  const s = slots().find(x => x.id === saveId);
+  return s ? ` · Saved as "${s.name}"` : '';
+}
+function writeSlot() {
+  if (!saveId || resetting) return;
+  const all = slots(), i = all.findIndex(x => x.id === saveId);
+  if (i < 0) return;
+  all[i] = Object.assign({}, all[i], snapshot(), { savedAt: Date.now() });
+  putSlots(all);
+}
+function saveAs(name) {
+  name = (name || '').trim().slice(0, 40);
+  if (!name) return toast('Type a name for this class first, like "Period 2".');
+  const all = slots();
+  const same = all.find(x => x.id === saveId) || all.find(x => x.name.toLowerCase() === name.toLowerCase() && x.kind === snapshot().kind);
+  if (same && same.id !== saveId && !confirmOverwrite(same)) return;
+  if (same) { Object.assign(same, snapshot(), { name, savedAt: Date.now() }); saveId = same.id; }
+  else { saveId = Math.random().toString(36).slice(2, 10); all.push(Object.assign({ id: saveId, name, savedAt: Date.now() }, snapshot())); }
+  putSlots(all);
+  local.set(BOARD_KEY, offline ? { offline, saveId } : { room, game: host.game, saveId });
+  toast(`Saved as "${name}". It will keep saving as you play.`);
+  if (offline) renderOffline(); else host.broadcast();
+  renderSaves();
+}
+let overwriteArmed = null;
+function confirmOverwrite(s) {
+  if (overwriteArmed === s.id) { overwriteArmed = null; return true; }
+  overwriteArmed = s.id; toast(`"${s.name}" already exists. Click Save again to replace it.`); return false;
+}
+function openSlot(id) {
+  const s = slots().find(x => x.id === id); if (!s) return;
+  resetting = true;
+  local.set(BOARD_KEY, s.kind === 'offline' ? { offline: s.offline, saveId: s.id } : { room: s.room, game: s.game, saveId: s.id });
+  location.reload();
+}
+let deleteArmed = null;
+function deleteSlot(id) {
+  if (deleteArmed !== id) { deleteArmed = id; renderSaves(); return; }
+  putSlots(slots().filter(x => x.id !== id));
+  if (saveId === id) saveId = null;
+  deleteArmed = null; renderSaves();
+}
+function downloadSave() {
+  const s = slots().find(x => x.id === saveId);
+  const name = s ? s.name : 'Class';
+  const data = Object.assign({ app: 'prove-up', version: 1, name, savedAt: Date.now() }, snapshot());
+  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `prove-up-${name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function importSave(file) {
+  const r = new FileReader();
+  r.onload = () => {
+    let d; try { d = JSON.parse(r.result); } catch (e) { return toast('That file is not a Prove Up! save file.'); }
+    if (!d || d.app !== 'prove-up' || !(d.kind === 'live' ? d.game && d.room : d.offline)) return toast('That file is not a Prove Up! save file.');
+    const all = slots(), id = Math.random().toString(36).slice(2, 10);
+    all.push({ id, name: d.name || 'Imported class', savedAt: Date.now(), kind: d.kind, room: d.room, game: d.game, offline: d.offline });
+    putSlots(all);
+    openSlot(id);
+  };
+  r.readAsText(file);
+}
+
+function renderSaves() {
+  const list = slots().sort((a, b) => b.savedAt - a.savedAt);
+  const cur = list.find(x => x.id === saveId);
+  if (!$('#spName').matches(':focus')) $('#spName').value = cur ? cur.name : '';
+  $('#spCurrent').textContent = cur ? `This game is saved as "${cur.name}" and saves itself after every change.` : 'This game is not saved yet. Name it to save it.';
+  $('#spList').innerHTML = list.length ? list.map(s => `<div class="sp-row${s.id === saveId ? ' cur' : ''}">
+      <div><b>${esc(s.name)}</b><span>${esc(describeSave(s))}</span><small>Saved ${new Date(s.savedAt).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</small></div>
+      ${s.id === saveId ? '<em>Open now</em>' : `<button data-open="${s.id}">Open</button>`}
+      <button class="light" data-del="${s.id}">${deleteArmed === s.id ? 'Click again to delete' : 'Delete'}</button></div>`).join('')
+    : '<p class="sp-empty">No saved classes on this computer yet.</p>';
+  document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => openSlot(b.dataset.open));
+  document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => deleteSlot(b.dataset.del));
+}
+$('#savesBtn').onclick = () => { deleteArmed = null; $('#savesPanel').classList.remove('hidden'); renderSaves(); };
+$('#spClose').onclick = () => $('#savesPanel').classList.add('hidden');
+$('#spSave').onclick = () => saveAs($('#spName').value);
+$('#spName').onkeydown = e => { if (e.key === 'Enter') saveAs($('#spName').value); };
+$('#spDownload').onclick = downloadSave;
+$('#spFile').onchange = e => { if (e.target.files[0]) importSave(e.target.files[0]); };
+
+// =====================================================================
 // NO-CONNECTION MODE
 // Every group plays on its own computer with the same 4-digit class code, so
 // everyone gets the same chance cards. The board reveals each year's card and an
@@ -197,7 +308,7 @@ function newOffline() {
 }
 function goOffline() {
   resetting = true;
-  local.set(BOARD_KEY, { offline: newOffline() });
+  local.set(BOARD_KEY, { offline: newOffline() });  // a fresh offline game starts unsaved
   location.reload();
 }
 function goLive() { resetting = true; local.del(BOARD_KEY); location.reload(); }
@@ -210,7 +321,8 @@ function offlineAdvance() {
   else if (o.phase === 'summer') o.phase = 'fall';
   else if (o.phase === 'fall') o.phase = 'winter';
   else if (o.phase === 'winter') { o.card = null; if (o.year >= E.CONFIG.years) o.phase = 'end'; else { o.year++; o.phase = 'spring'; } }
-  local.set(BOARD_KEY, { offline: o });
+  local.set(BOARD_KEY, { offline: o, saveId });
+  writeSlot();
   renderOffline();
 }
 
@@ -253,7 +365,7 @@ function renderOffline() {
   const label = { lobby: 'Start: Set Up Homesteads', setup: 'Begin Spring 1884', spring: 'Draw a Chance Card', summer: 'Harvest Time', fall: 'Winter Arrives',
     winter: o.year >= 5 ? 'Final Results' : `Begin Spring ${cal + 1}` }[p] || '';
   const adv = $('#advBtn'); adv.textContent = label; adv.classList.toggle('hidden', !label); adv.disabled = false;
-  $('#status').textContent = 'No-Connection Mode · class code ' + o.code;
+  $('#status').textContent = 'No-Connection Mode · class code ' + o.code + saveNote();
   const qr = $('#qr'); if (qr) drawQR(qr, BASE + 'play.html');
   document.querySelectorAll('[data-live]').forEach(b => b.onclick = goLive);
   const n = $('#net'); if (n) n.remove();
@@ -269,5 +381,10 @@ function drawQR(el, url) {
 Engine.DATA.CARDS.forEach(c => { const i = new Image(); i.src = cardArt(c.id); });
 ['setup', 'spring', 'fall', 'winter', 'end', 'selfpaced'].forEach(k => { const i = new Image(); i.src = sceneArt(k); });
 const saved = local.get(BOARD_KEY);
+saveId = saved && saved.saveId && slots().some(x => x.id === saved.saveId) ? saved.saveId : null;
 if (saved && saved.offline) { offline = saved.offline; renderOffline(); }
-else startLive(saved && saved.game && saved.game.phase !== 'end' ? saved : null);
+else {
+  const keep = saved && saved.game && (saved.game.phase !== 'end' || saveId);
+  if (!keep) saveId = null;
+  startLive(keep ? saved : null);
+}
