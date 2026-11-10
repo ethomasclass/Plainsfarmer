@@ -6,6 +6,8 @@ family trying to "prove up" a claim under the Homestead Act by surviving 5 years
 
 **Play it:** https://ethomasclass.github.io/plainsfarmer/
 
+**Teacher guide (PDF, 2 pages):** [docs/Prove_Up_Teacher_Guide.pdf](docs/Prove_Up_Teacher_Guide.pdf): run of show, the money rules, and the real history behind every family, setup choice, and chance card.
+
 Nothing to install, no accounts, no student logins. It runs entirely in the browser.
 
 ---
