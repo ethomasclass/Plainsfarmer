@@ -196,7 +196,7 @@ const lockedWait = () => waitMsg(teacherWait, 'lock');
 function pLobby() {
   const fd = famData();
   return `<h2>Meet Your Family</h2>${famCard(fd)}
-    <div class="grow"></div>${waitMsg('Waiting for your teacher to start the game...')}`;
+    <div class="grow"></div>${game && game.intro ? waitMsg('<b>Eyes up!</b> Look at the board to learn about the Homestead Act.', 'mortgage') : waitMsg('Waiting for your teacher to start the game...')}`;
 }
 function famCard(fd) {
   return `<div class="famcard"><img class="famportrait" src="${portrait(fd.key, 'hopeful')}" alt=""><div class="tag">${esc(fd.tag.toUpperCase())}</div><h3>${esc(fd.name)}</h3>

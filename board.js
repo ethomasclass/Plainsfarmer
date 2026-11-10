@@ -22,7 +22,7 @@ function startLive(sv) {
   const save = () => { if (resetting) return; local.set(BOARD_KEY, { room, game: host.game, saveId }); writeSlot(); };
   host = new GameHost({
     game: sv ? sv.game : Engine.newGame(),
-    extra: () => ({ room, joinUrl: BASE + 'play.html?room=' + room, net: net.state }),
+    extra: () => ({ room, joinUrl: BASE + 'play.html?room=' + room, net: net.state, intro: introLive }),
     onChange: () => { clearTimeout(t); t = setTimeout(save, 300); },
   });
   window.addEventListener('beforeunload', save);
@@ -176,9 +176,102 @@ function wire() {
 }
 
 $('#advBtn').onclick = () => {
+  const inLobby = offline ? offline.phase === 'lobby' : game && game.phase === 'lobby';
+  if (inLobby && !introDone) return openIntro(true);   // teach the Homestead Act first
   const b = $('#advBtn'); b.disabled = true; setTimeout(() => { b.disabled = false; }, 800);
   if (offline) offlineAdvance(); else Net.send({ t: 'advance' });
 };
+
+// =====================================================================
+// HOMESTEAD ACT EXPLAINER
+// A full-screen "Extra Edition" the teacher clicks through (about 60 to 90
+// seconds) before setup. Facts: National Archives and National Park Service.
+// =====================================================================
+let introDone = false, introStep = 0, introThenStart = false;
+const ex = (p) => `${ART}${p}.webp`;
+const INTRO = [
+  { kicker: 'Extra! The Law That Opened the West', head: 'What Was the Homestead Act?',
+    text: `<p>In <b>1862</b>, in the middle of the Civil War, President <b>Abraham Lincoln</b> signed the Homestead Act.</p>
+           <p>It offered <b>free land</b> in the West to people who would move there and farm it.</p>
+           <div class="ex-word"><b>homestead</b> (noun): a home and the farmland around it.</div>`,
+    art: `<img class="ex-eng" src="${ex('board/scenes/scene-lobby')}" alt="">` },
+  { kicker: 'Who Could Claim Land?', head: 'Almost Anyone Could Apply',
+    text: `<p>You had to be <b>21 or older</b>, or the <b>head of a family</b>.</p>
+           <p>That included <b>women</b>, <b>immigrants</b> who planned to become citizens, and <b>Black Americans</b> once the 14th Amendment made them citizens in 1868.</p>
+           <p>The one rule: you could <b>never have fought against the United States</b>.</p>`,
+    art: `<div class="ex-cameos">${['freeman', 'larsen', 'obrien', 'moore'].map(k => {
+            const f = Engine.DATA.FAMILIES.find(x => x.key === k);
+            return `<figure><img src="${cameo(k)}" alt=""><figcaption><b>${esc(f.name)}</b>${esc(f.tag)}</figcaption></figure>`; }).join('')}</div>
+          <div class="ex-caption">The four families in our game</div>` },
+  { kicker: 'How Much Land?', head: '160 Acres',
+    text: `<p>Each claim was <b>160 acres</b>. That is about the size of <b>120 football fields</b>.</p>
+           <p>In this game, your farm has <b>16 plots</b>. Each plot is 10 acres.</p>
+           <div class="ex-eq">16 plots &times; 10 acres = <b>160 acres</b></div>`,
+    art: `<div class="ex-grid">${Array.from({ length: 16 }, (_, i) => `<div style="background-image:url('${ex('console/tiles/tile-' + ['wheat-ripe', 'corn-ripe', 'oats-ripe', 'soil'][(i + Math.floor(i / 4)) % 4])}')"><span>10 acres</span></div>`).join('')}</div>` },
+  { kicker: 'The Deal', head: 'Live There 5 Years: "Prove Up"',
+    text: `<ol class="ex-steps">
+             <li><b>File a claim</b> at the land office and pay <b>$18</b> in fees.</li>
+             <li><b>Build a home</b> and <b>farm the land</b>.</li>
+             <li><b>Live there for 5 years.</b></li>
+           </ol>
+           <p>Then the land is yours to keep. That is called <b>proving up</b>.</p>`,
+    art: `<div class="ex-track">
+            <div class="ex-start"><img src="${ex('console/sprites/sign-claim')}" alt=""><b>Claim</b><span>$18</span></div>
+            ${[1884, 1885, 1886, 1887, 1888].map((y, i) => `<div class="ex-year"><img src="${ex('console/icons/icon-' + ['spring', 'summer', 'fall', 'winter', 'wheat'][i])}" alt=""><b>${y}</b><span>Year ${i + 1}</span></div>`).join('')}
+            <div class="ex-end"><img src="${ex('console/icons/icon-mortgage')}" alt=""><b>The land is yours!</b></div>
+          </div>
+          <div class="ex-caption">Your game covers all 5 years, 1884 to 1888.</div>` },
+  { kicker: 'The Catch', head: 'Free Land Was Not Easy Land',
+    text: `<ul class="ex-catch">
+             <li><img src="${ex('console/icons/icon-snow')}" alt=""><span><b>Weather:</b> drought, blizzards, hail, and grasshoppers.</span></li>
+             <li><img src="${ex('console/icons/icon-debt')}" alt=""><span><b>Money:</b> seeds, tools, and a bank loan to pay back.</span></li>
+             <li><img src="${ex('console/icons/icon-bones')}" alt=""><span><b>Someone was already there:</b> the Plains were home to Native nations like the Lakota, Cheyenne, and Pawnee.</span></li>
+           </ul>`,
+    art: `<div class="ex-stat">
+            <div class="ex-bar"><i style="width:100%"></i><span><b>4 million</b> claims filed</span></div>
+            <div class="ex-bar kept"><i style="width:40%"></i><span><b>1.6 million</b> proved up</span></div>
+            <p>Only about <b>4 in 10</b> claims ever became a family's land.</p>
+            <small>Source: National Park Service</small>
+          </div>
+          <div class="ex-question">Will your family prove up?</div>` },
+];
+function openIntro(thenStart) {
+  introThenStart = !!thenStart; introStep = 0;
+  $('#explainer').classList.remove('hidden');
+  if (host) { introLive = true; host.broadcast(); }
+  renderIntro();
+}
+let introLive = false;
+function closeIntro(start) {
+  $('#explainer').classList.add('hidden');
+  introLive = false; if (host) host.broadcast();
+  if (start) {
+    introDone = true;
+    if (offline) offlineAdvance(); else Net.send({ t: 'advance' });
+  }
+}
+function renderIntro() {
+  const p = INTRO[introStep], last = introStep === INTRO.length - 1;
+  $('#explainer').innerHTML = `<div class="ex-top"><span>The Prairie Herald</span><b>Extra Edition</b><span>${introStep + 1} of ${INTRO.length}</span></div>
+    <div class="ex-body"><div class="ex-text"><div class="kicker">${p.kicker}</div><h2>${p.head}</h2>${p.text}</div><div class="ex-art">${p.art}</div></div>
+    <div class="ex-nav">
+      <button class="light" id="exSkip">${introThenStart ? 'Skip' : 'Close'}</button>
+      <div class="ex-dots">${INTRO.map((_, i) => `<i class="${i === introStep ? 'on' : ''}" data-step="${i}"></i>`).join('')}</div>
+      ${introStep ? '<button class="light" id="exBack">Back</button>' : ''}
+      <button id="exNext">${last ? (introThenStart ? 'Start the Game' : 'Back to the Game') : 'Next'}</button>
+    </div>`;
+  $('#exNext').onclick = () => last ? closeIntro(introThenStart) : (introStep++, renderIntro());
+  if ($('#exBack')) $('#exBack').onclick = () => { introStep--; renderIntro(); };
+  $('#exSkip').onclick = () => closeIntro(introThenStart);
+  document.querySelectorAll('[data-step]').forEach(d => d.onclick = () => { introStep = +d.dataset.step; renderIntro(); });
+}
+document.addEventListener('keydown', e => {
+  if ($('#explainer').classList.contains('hidden')) return;
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); $('#exNext').click(); }
+  if ((e.key === 'ArrowLeft' || e.key === 'PageUp') && introStep) { introStep--; renderIntro(); }
+  if (e.key === 'Escape') closeIntro(false);
+});
+$('#introBtn').onclick = () => openIntro(false);
 $('#resetBtn').onclick = () => {
   const b = $('#resetBtn');
   if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Click again to erase this game'; setTimeout(() => { delete b.dataset.sure; b.textContent = 'New Game'; }, 4000); return; }

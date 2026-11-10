@@ -38,6 +38,23 @@ Nothing to install, no accounts, no student logins. It runs entirely in the brow
 Test the live code once on your school Wi-Fi before class. Live games connect computers
 directly to each other using the free PeerJS service, and some school filters block that.
 
+## The Homestead Act explainer (60 to 90 seconds)
+
+When you press **Start** on the board, a full-screen "Extra Edition" teaches the Homestead Act
+before setup begins. Click **Next** (or press the right arrow or space bar) to move through five panels.
+Student screens say "Eyes up! Look at the board" while it is open. You can reopen it at any time with
+the **Homestead Act** button on the board.
+
+| Panel | Key idea | Say something like |
+|---|---|---|
+| 1. What was it? | 1862, Lincoln, free land in the West | "During the Civil War, the government offered free land to anyone who would farm it." |
+| 2. Who could apply? | 21 or head of a family; women, immigrants, Black Americans after 1868 | "Notice who is on this list. These are the four families you'll play." |
+| 3. How much land? | 160 acres, about 120 football fields | "Your farm in the game is exactly this: 16 plots of 10 acres." |
+| 4. The deal | File a claim, pay $18, build, farm, live there 5 years | "Survive 5 years and you 'prove up.' That is your goal today." |
+| 5. The catch | Weather, money, and Native nations already living there; about 4 in 10 claims proved up | "Most people who tried did not make it. Will your family?" |
+
+Facts come from the National Archives and the National Park Service.
+
 ## Saving a class to finish another day
 
 1. On the board, click **Save / Load Class**, type a name (for example, **Period 2**), and click **Save**.
